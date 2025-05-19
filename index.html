@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Змейка</title>
+  <style>
+    body {
+      font-family: monospace;
+      text-align: center;
+      margin-top: 20px;
+      background-color: #f0f0f0;
+    }
+    #game {
+      white-space: pre;
+      font-size: 20px;
+      line-height: 1;
+      margin: 0 auto;
+      padding: 10px;
+      background: #222;
+      color: white;
+      border-radius: 5px;
+      display: inline-block;
+    }
+    #controls {
+      margin-top: 10px;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Змейка</h1>
+  <div id="game"></div>
+  <div id="controls">Управление: WASD | Пауза: P</div>
+  <script>
+    const size = 40;
+    let snake = [{x: 10, y: 10}];
+    let food = spawnFood();
+    let direction = 'right';
+    let nextDirection = 'right';
+    let score = 0;
+    let isPaused = false;
+    let gameSpeed = 100;
+    let lastUpdate = 0;
+    let gameLoopId;
+    function init() {
+      document.addEventListener('keydown', handleKeyPress);
+      draw();
+      gameLoopId = requestAnimationFrame(gameLoop);
+    }
+    function gameLoop(timestamp) {
+      if (!lastUpdate) lastUpdate = timestamp;
+      const delta = timestamp - lastUpdate;
+      if (delta > gameSpeed && !isPaused) {
+        direction = nextDirection; 
+        move();
+        draw();
+        lastUpdate = timestamp;
+      }
+      gameLoopId = requestAnimationFrame(gameLoop);
+    }
+    function draw() {
+      let output = '';
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const isHead = snake[0].x === x && snake[0].y === y;
+          const isBody = snake.slice(1).some(s => s.x === x && s.y === y);
+          if (isHead) output += '🟢';
+          else if (isBody) output += '🟩';
+          else if (x === food.x && y === food.y) output += '🍎';
+          else output += '⬛';
+        }
+        output += '\n';
+      }
+        document.getElementById('game').innerHTML = 
+        `${output}Счёт: ${score} | ${isPaused ? 'ПАУЗА' : 'Играем'}`;
+    }
+    function move() {
+      const head = {...snake[0]};
+        switch(direction) {
+        case 'up':    head.y--; break;
+        case 'down':  head.y++; break;
+        case 'left':  head.x--; break;
+        case 'right': head.x++; break;
+      }
+      if (
+        head.x < 0 || head.x >= size || 
+        head.y < 0 || head.y >= size ||
+        snake.some(s => s.x === head.x && s.y === head.y)
+      ) {
+        gameOver();
+        return;
+      }
+        snake.unshift(head);
+        if (head.x === food.x && head.y === food.y) {
+          score += 1;
+          food = spawnFood();
+          gameSpeed = Math.max(100, gameSpeed - 5);
+      } else {
+        snake.pop();
+      }
+    }
+    function spawnFood() {
+      let newFood;
+      do {
+        newFood = {
+          x: Math.floor(Math.random() * size),
+          y: Math.floor(Math.random() * size)
+        };
+      } while (snake.some(s => s.x === newFood.x && s.y === newFood.y));
+      return newFood;
+    }
+    function handleKeyPress(e) {
+      const key = e.key.toLowerCase();
+      const directionMap = {
+        'w': 'up',
+        's': 'down',
+        'a': 'left',
+        'd': 'right',
+        'ц': 'up',
+        'ы': 'down',
+        'ф': 'left',
+        'в': 'right',
+        'arrowup': 'up',
+        'arrowdown': 'down',
+        'arrowleft': 'left',
+        'arrowright': 'right'
+      };
+      if (directionMap[key]) {
+        const oppositeDirections = {
+          up: 'down',
+          down: 'up',
+          left: 'right',
+          right: 'left'
+        };
+        
+        if (direction !== oppositeDirections[directionMap[key]]) {
+          nextDirection = directionMap[key];
+        }
+      } else if (key === 'p' || key === 'з') {
+        isPaused = !isPaused;
+        draw();
+      }
+        else if(key === "(")
+        {
+          gameSpeed -= 10;
+          console.log(gameSpeed)
+        }
+        else if(key === ")")
+        {
+          gameSpeed += 10;
+          console.log(gameSpeed)
+        }
+    }
+    function gameOver() {
+      cancelAnimationFrame(gameLoopId);
+      document.getElementById('game').innerHTML += 
+        `\nИГРА ОКОНЧЕНА! Финальный счёт: ${score}\n` +
+        `Нажми F5 для перезапуска`;
+    }
+    window.onload = init;
+  </script>
+</body>
+</html>
